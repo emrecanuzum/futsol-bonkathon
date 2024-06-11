@@ -1,4 +1,4 @@
-live vercel demo:
+live vercel demo (only team and practice):
 
 https://futsol-game-app.vercel.app/
 
