@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  wallet     String           @id @map("_id")
+  username   String?
+  profileImg String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @default(now()) @updatedAt
+  team       Team?            @relation(fields: [teamId], references: [id])
+  teamId     String?          @unique @db.ObjectId
+  players    FootballPlayer[]
+}
+
+model FootballPlayer {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  stars       Int
+  overall     Int
+  stats       Stats        @relation(fields: [statsId], references: [id])
+  statsId     String       @unique @db.ObjectId
+  position    Position
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  TeamPlayer  TeamPlayer[]
+  mintAddress String?
+  User        User?        @relation(fields: [userWallet], references: [wallet])
+  userWallet  String?
+}
+
+model Stats {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  position       Position
+  Catch          Int?
+  Pass           Int?
+  Defense        Int?
+  Shoot          Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  FootballPlayer FootballPlayer? //It is not possible to enforce football player in DB level. But it should never be null.
+}
+
+enum Position {
+  Goalkeeper
+  Defender
+  Midfielder
+  Attacker
+}
+
+enum Tactic {
+  BALANCED // 4-4-2
+  // More tactics can be added here
+}
+
+//There can be only 11 positions in a tactic.
+//Each number might represent a different position in different tactics. 
+//If it is a BALANCED tactic, the positions are as follows:
+//                POSITION_10    POSITION_11
+//  POSITION_6                                POSITION_9
+//                POSITION_7    POSITION_8 
+//  POSITION_2                                POSITION_5
+//                POSITION_3    POSITION_4      
+//                       POSITION_1  
+enum PositionID {
+  POSITION_1
+  POSITION_2
+  POSITION_3
+  POSITION_4
+  POSITION_5
+  POSITION_6
+  POSITION_7
+  POSITION_8
+  POSITION_9
+  POSITION_10
+  POSITION_11
+}
+
+model TeamPlayer {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  player    FootballPlayer @relation(fields: [playerId], references: [id])
+  playerId  String         @db.ObjectId
+  team      Team           @relation(fields: [teamId], references: [id])
+  teamId    String         @db.ObjectId
+  position  PositionID
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Team {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  name       String       @default("My Team")
+  tactic     Tactic       @default(BALANCED)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  TeamPlayer TeamPlayer[]
+  User       User?
+}
